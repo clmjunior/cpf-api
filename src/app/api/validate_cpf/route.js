@@ -11,6 +11,40 @@ const pool = mysql.createPool({
   connectionLimit: 10, // Número de conexões simultâneas
 });
 
+export async function GET() {
+  try {
+    console.log("Recebendo requisição GET...");
+
+    // Testando a conexão com o banco de dados
+    await pool.query("SELECT 1");
+    console.log("Conexão com o banco bem-sucedida.");
+
+    return NextResponse.json({
+      message: "Conexão com o banco de dados bem-sucedida.",
+    });
+  } catch (error) {
+    console.error("Erro detectado na conexão com o banco:", error);
+
+    // Verifica se o erro é relacionado à conexão com o banco
+    if (error.code === "PROTOCOL_CONNECTION_LOST" || error.code === "ECONNREFUSED") {
+      return NextResponse.json(
+        {
+          error: "Banco de dados não acessível. Tente novamente mais tarde.",
+        },
+        { status: 503 } // Status 503 indica serviço temporariamente indisponível
+      );
+    }
+
+    // Retorna erros inesperados
+    return NextResponse.json(
+      {
+        error: `Erro inesperado no servidor: ${error.message}`,
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req) {
   try {
     console.log("Recebendo requisição...");
